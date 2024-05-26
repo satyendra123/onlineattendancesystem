@@ -1,1 +1,120 @@
+//EXAMPLE-1 this code is tested with the esp32 and DHt sensor and store the data into the database
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
 
+WiFiClient client;
+HTTPClient http;
+
+String device_id = "Device0001";
+String ssid = "Airtel_tejv_3002";
+String password = "air73137";
+
+float DHT_Temperature = 22.4;
+float DHT_Humidity = 34;
+
+String HTTPS_POST_URL = "http://192.168.1.19:1880/esp32/update/"; 
+String HTTPS_GET_URL = "http://192.168.1.19:1880/esp32/esp32/boom/";
+
+const int LED_PIN = 2; // GPIO 2 for the built-in LED
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(LED_PIN, OUTPUT);
+  setup_wifi();
+}
+
+void loop() {
+
+  // Create JSON object for temperature data
+  StaticJsonDocument<200> jsonTemperature;
+  jsonTemperature["device_id"] = device_id;
+  jsonTemperature["type"] = "Temperature";
+  jsonTemperature["value"] = DHT_Temperature;
+
+  // Serialize JSON object to a String
+  String pkt;
+  serializeJson(jsonTemperature, pkt);
+
+  HTTPS_POST(HTTPS_POST_URL, pkt);
+
+  // Create JSON object for humidity data
+  StaticJsonDocument<200> jsonHumidity;
+  jsonHumidity["device_id"] = device_id;
+  jsonHumidity["type"] = "Humidity";
+  jsonHumidity["value"] = DHT_Humidity;
+
+  // Serialize JSON object to a String
+  String pkt2;
+  serializeJson(jsonHumidity, pkt2);
+
+  HTTPS_POST(HTTPS_POST_URL, pkt2);
+
+  HTTPS_GET(HTTPS_GET_URL);
+
+  delay(1000);
+}
+
+void setup_wifi() {
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+  }
+}
+
+void HTTPS_POST(String HTTPS_POST_URL, String PostPacket) 
+{
+  Serial.println("\nPosting to: " + HTTPS_POST_URL);
+  Serial.println("PostPacket: " + PostPacket);
+
+  Serial.println("Connecting to server..");
+  if (http.begin(client, HTTPS_POST_URL)) {
+    http.addHeader("Content-Type", "application/json");
+    int httpCode = http.POST(PostPacket);
+    if (httpCode > 0) {
+      Serial.println("httpCode: " + String(httpCode));
+      if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_CREATED) {
+        String ServerResponse = http.getString();
+        Serial.println("ServerResponse: " + ServerResponse);
+        // Parse the JSON response
+        StaticJsonDocument<200> jsonResponse;
+        deserializeJson(jsonResponse, ServerResponse);
+        // Check if the relay is "OPENEN" and turn on the LED
+        if (jsonResponse["relay"] == "OPENEN") {
+          digitalWrite(LED_PIN, HIGH); // Turn on the LED
+          delay(1000); // Wait for 1 second
+          digitalWrite(LED_PIN, LOW); // Turn off the LED
+        }
+      }
+    } else {
+      Serial.print("Failed to POST. Error: ");
+      Serial.println(http.errorToString(httpCode).c_str());
+    }
+  } else {
+    Serial.print("Failed to connect to server");
+  }
+  http.end();
+}
+
+void HTTPS_GET(String HTTPS_GET_URL) 
+{
+  Serial.println("\nGetting from: " + HTTPS_GET_URL);
+
+  Serial.println("Connecting to server..");
+  if (http.begin(client, HTTPS_GET_URL)) {
+    int httpCode = http.GET();
+    if (httpCode > 0) {
+      Serial.println("httpCode: " + String(httpCode));
+      if (httpCode == HTTP_CODE_OK) {
+        String ServerResponse = http.getString();
+        Serial.println("\nServerResponse: " + ServerResponse);
+      }
+    } else {
+      Serial.print("Failed to GET. Error: ");
+      Serial.println(http.errorToString(httpCode).c_str());
+    }
+  } else {
+    Serial.print("Failed to connect to server");
+  }
+  http.end();
+}
