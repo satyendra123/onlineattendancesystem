@@ -41,8 +41,8 @@ MFRC522 mfrc522(SS_PIN, RST_PIN);  //--> Create MFRC522 instance.
 #define ON_Board_LED 2  //--> Defining an On Board LED, used for indicators when the process of connecting to a wifi router
 
 //----------------------------------------SSID and Password of your WiFi router-------------------------------------------------------------------------------------------------------------//
-const char* ssid = "Alsan Air WiFi 4";
-const char* password = "11122235122@kap1";
+const char* ssid = "Airtel_tejv_3002";
+const char* password = "air73137";
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------//
 
 ESP8266WebServer server(80);  //--> Server on port 80
