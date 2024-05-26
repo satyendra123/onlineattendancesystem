@@ -1,3 +1,7 @@
+//EXAMPLE-1 this is a complete code in which what i will do is react js me 5 button create karunga enroll user, delete user, Edit user, See user like this. and if i go into the Add user then one form will come like rfid card data, roll number, address etc.
+// and i can submit this data into the database
+
+
 /*
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   # RFID MFRC522 / RC522 Library : https://github.com/miguelbalboa/rfid #
