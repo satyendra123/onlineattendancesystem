@@ -1,3 +1,4 @@
+// this exaample is taken from https://how2electronics.com/iot-biometric-fingerprint-attendance-system-with-esp8266/ here and 
 #include <SPI.h>
 #include <Wire.h>
 #include <WiFiClient.h> 
