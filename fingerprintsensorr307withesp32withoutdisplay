@@ -1,4 +1,4 @@
-// this exaample is taken from https://how2electronics.com/iot-biometric-fingerprint-attendance-system-with-esp8266/ here and 
+// this exaample is taken from https://how2electronics.com/iot-biometric-fingerprint-attendance-system-with-esp8266/ here and https://www.prateeks.in/2020/04/iot-based-fingerprint-biometric.html and https://diyprojectslab.com/iot-rfid-attendance-system-based-on-esp8266/
 #include <SPI.h>
 #include <Wire.h>
 #include <WiFiClient.h> 
