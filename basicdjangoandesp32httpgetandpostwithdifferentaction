@@ -1,0 +1,156 @@
+#this is the basic code which is used to get and post the data through django backened and test it though postman
+#include <SPI.h>
+#include <Wire.h>
+#include <WiFiClient.h> 
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+
+const char *ssid = "Airtel_tejv_3002";
+const char *password = "air73137";
+String postData; 
+String link = "http://192.168.0.108/biometricattendance/getdata.php"; 
+int FingerID = 0;     
+
+void setup() {
+  Serial.begin(115200);
+  connectToWiFi();
+  Serial.println("Fingerprint sensor simulation started");
+}
+
+void loop() {
+  if(WiFi.status() != WL_CONNECTED){
+    connectToWiFi();
+  }
+  FingerID = getFingerprintID();  
+  delay(50);  
+  DisplayFingerprintID();
+  ChecktoAddID();
+  ChecktoDeleteID();
+}
+
+void DisplayFingerprintID(){
+  if (FingerID > 0){
+    SendFingerprintID(FingerID);
+  }
+}
+
+void SendFingerprintID(int finger){
+  WiFiClient client;
+  HTTPClient http;  
+  postData = "FingerID=" + String(finger); 
+  http.begin(client, link); 
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");   
+  
+  int httpCode = http.POST(postData);   //Send the request
+  String payload = http.getString();    //Get the response payload
+  
+  Serial.println(httpCode);   //Print HTTP return code
+  Serial.println(payload);    //Print request response payload
+  Serial.println(postData);   //Post Data
+  Serial.println(finger);     //Print fingerprint ID
+
+  if (payload.substring(0, 5) == "login") {
+    String user_name = payload.substring(5);
+    Serial.println(user_name);
+  } else if (payload.substring(0, 6) == "logout") {
+    String user_name = payload.substring(6);
+    Serial.println(user_name);
+  }
+  delay(1000);
+  
+  postData = "";
+  http.end();  //Close connection
+}
+
+int getFingerprintID() {
+  // Simulate a fingerprint ID
+  static int simulatedID = 1;
+  return simulatedID++; // Increment the ID for each call
+}
+
+void ChecktoDeleteID(){
+  WiFiClient client;
+  HTTPClient http; 
+  postData = "DeleteID=check"; 
+
+  http.begin(client, link);  
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");    
+  
+  int httpCode = http.POST(postData);   
+  String payload = http.getString();    
+
+  if (payload.substring(0, 6) == "del-id") {
+    String del_id = payload.substring(6);
+    Serial.println(del_id);
+    deleteFingerprint(del_id.toInt());
+  }
+  
+  http.end();  
+}
+
+uint8_t deleteFingerprint(int id) {
+  Serial.print("Simulated deletion of fingerprint ID: ");
+  Serial.println(id);
+  return 0; // Simulate success
+}
+
+void ChecktoAddID(){
+  WiFiClient client;
+  HTTPClient http;   
+  postData = "Get_Fingerid=get_id"; 
+
+  http.begin(client, link); 
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");    
+  
+  int httpCode = http.POST(postData);   
+  String payload = http.getString();    
+
+  if (payload.substring(0, 6) == "add-id") {
+    String add_id = payload.substring(6);
+    Serial.println(add_id);
+    int id = add_id.toInt();
+    getFingerprintEnroll(id);
+  }
+  http.end();  
+}
+
+uint8_t getFingerprintEnroll(int id) {
+  Serial.print("Simulated enrollment of fingerprint ID: ");
+  Serial.println(id);
+  confirmAdding(id);
+  return 0; // Simulate success
+}
+
+void confirmAdding(int id){
+  WiFiClient client;
+  HTTPClient http;   
+  postData = "confirm_id=" + String(id); 
+
+  http.begin(client, link); 
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");    
+  
+  int httpCode = http.POST(postData);   
+  String payload = http.getString();    
+
+  Serial.println(payload);
+  
+  http.end();  
+}
+
+void connectToWiFi(){
+  WiFi.mode(WIFI_OFF);        
+  delay(1000);
+  WiFi.mode(WIFI_STA);
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+  WiFi.begin(ssid, password);
+  
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("Connected");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+}
