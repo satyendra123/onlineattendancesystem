@@ -1,5 +1,3 @@
-cpp
-Copy code
 #include <WiFi.h>
 #include <HTTPClient.h>
 
@@ -8,7 +6,7 @@ const char* ssid = "your_SSID";
 const char* password = "your_PASSWORD";
 
 // Replace with your server URL
-const char* link = "http://your_server_url/";
+const char* serverUrl = "http://your_server_url/";
 
 void setup() {
   Serial.begin(115200);
@@ -36,7 +34,7 @@ void ChecktoAddID() {
 
   String postData = "Get_Fingerid=get_id"; // Add the Fingerprint ID to the Post array in order to send it
 
-  http.begin(client, link + "check_add_id/");  // Initiate HTTP request
+  http.begin(client, String(serverUrl) + "check_add_id/");  // Initiate HTTP request
   http.addHeader("Content-Type", "application/x-www-form-urlencoded");    // Specify content-type header
   
   int httpCode = http.POST(postData);   // Send the request
@@ -65,7 +63,7 @@ void ChecktoDeleteID() {
 
   String postData = "Action=check"; // Add the action to the Post array in order to send it
 
-  http.begin(client, link + "check_delete_id/");  // Initiate HTTP request
+  http.begin(client, String(serverUrl) + "check_delete_id/");  // Initiate HTTP request
   http.addHeader("Content-Type", "application/x-www-form-urlencoded");    // Specify content-type header
   
   int httpCode = http.POST(postData);   // Send the request
@@ -93,7 +91,7 @@ void ChecktoUpdateID() {
 
   String postData = "Action=check"; // Add the action to the Post array in order to send it
 
-  http.begin(client, link + "check_update_id/");  // Initiate HTTP request
+  http.begin(client, String(serverUrl) + "check_update_id/");  // Initiate HTTP request
   http.addHeader("Content-Type", "application/x-www-form-urlencoded");    // Specify content-type header
   
   int httpCode = http.POST(postData);   // Send the request
