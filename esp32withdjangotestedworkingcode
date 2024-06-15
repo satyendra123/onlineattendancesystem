@@ -1,0 +1,367 @@
+#esp32 code http post request. ye bar bar hit marta hai ki kuch hai kuch hai add karne ko delete karne ko update krne ko server par django me jo bana hai. agar to kuch hai to ye response ke taur par send kar dete hai nahi to null send karte rhte hai
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+// Replace these with your network credentials
+const char* ssid = "Airtel_tejv_3002";
+const char* password = "air73137";
+
+// Replace with your server URL
+const char* serverUrl = "http://192.168.1.9:8000/biometricattendance/getdata/";
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
+
+  // Wait for connection
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  
+  Serial.println("Connected to WiFi");
+}
+
+void loop() {
+  ChecktoAddID();
+  ChecktoDeleteID();
+  ChecktoUpdateID();
+  delay(10000); // Check actions every 10 seconds
+}
+
+void ChecktoAddID() {
+  WiFiClient client;
+  HTTPClient http;
+
+  String postData = "Get_Fingerid=get_id"; // Add the Fingerprint ID to the Post array in order to send it
+
+  String url = String(serverUrl) + "check_add_id/"; // Construct the full URL
+  Serial.println("Requesting URL: " + url); // Debug print
+
+  http.begin(client, url); // Initiate HTTP request
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded"); // Specify content-type header
+  
+  int httpCode = http.POST(postData); // Send the request
+  String payload = http.getString(); // Get the response payload
+
+  if (httpCode > 0) { // Check for the returning code
+    Serial.printf("HTTP Response code: %d\n", httpCode);
+    Serial.println("Payload: " + payload);
+
+    if (payload.startsWith("{\"response\": \"add-id")) {
+      String add_id = payload.substring(payload.indexOf("add-id") + 6);
+      Serial.println("Add ID: " + add_id);
+      int id = add_id.toInt();
+      getFingerprintEnroll(id);
+    }
+  } else {
+    Serial.printf("Error in HTTP request: %s\n", http.errorToString(httpCode).c_str());
+  }
+  
+  http.end(); // Close connection
+}
+
+void ChecktoDeleteID() {
+  WiFiClient client;
+  HTTPClient http;
+
+  String postData = "DeleteID=check"; // Add the action to the Post array in order to send it
+
+  String url = String(serverUrl) + "check_delete_id/"; // Construct the full URL
+  Serial.println("Requesting URL: " + url); // Debug print
+
+  http.begin(client, url); // Initiate HTTP request
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded"); // Specify content-type header
+  
+  int httpCode = http.POST(postData); // Send the request
+  String payload = http.getString(); // Get the response payload
+
+  if (httpCode > 0) { // Check for the returning code
+    Serial.printf("HTTP Response code: %d\n", httpCode);
+    Serial.println("Payload: " + payload);
+
+    if (payload.startsWith("{\"response\": \"del-id")) {
+      String id = payload.substring(payload.indexOf("del-id") + 6);
+      Serial.println("Delete ID: " + id);
+      deleteFingerprint(id.toInt());
+    }
+  } else {
+    Serial.printf("Error in HTTP request: %s\n", http.errorToString(httpCode).c_str());
+  }
+  
+  http.end(); // Close connection
+}
+
+void ChecktoUpdateID() {
+  WiFiClient client;
+  HTTPClient http;
+
+  String postData = "UpdateID=check"; // Add the action to the Post array in order to send it
+
+  String url = String(serverUrl) + "check_update_id/"; // Construct the full URL
+  Serial.println("Requesting URL: " + url); // Debug print
+
+  http.begin(client, url); // Initiate HTTP request
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded"); // Specify content-type header
+  
+  int httpCode = http.POST(postData); // Send the request
+  String payload = http.getString(); // Get the response payload
+
+  if (httpCode > 0) { // Check for the returning code
+    Serial.printf("HTTP Response code: %d\n", httpCode);
+    Serial.println("Payload: " + payload);
+
+    if (payload.startsWith("{\"response\": \"update-id")) {
+      String id = payload.substring(payload.indexOf("update-id") + 10);
+      Serial.println("Update ID: " + id);
+      updateFingerprint(id.toInt());
+    }
+  } else {
+    Serial.printf("Error in HTTP request: %s\n", http.errorToString(httpCode).c_str());
+  }
+  
+  http.end(); // Close connection
+}
+
+void deleteFingerprint(int id) {
+  // Dummy implementation, replace with your actual code
+  Serial.printf("Fingerprint ID %d deleted.\n", id);
+}
+
+void addFingerprint(int id) {
+  // Dummy implementation, replace with your actual code
+  Serial.printf("Fingerprint ID %d added.\n", id);
+}
+
+void updateFingerprint(int id) {
+  // Dummy implementation, replace with your actual code
+  Serial.printf("Fingerprint ID %d updated.\n", id);
+}
+
+void getFingerprintEnroll(int id) {
+  // Dummy implementation, replace with your actual code
+  Serial.printf("Enrolling Fingerprint ID %d.\n", id);
+}
+
+/*
+#include <SPI.h>
+#include <EthernetENC.h>
+
+// Network settings
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED }; // Change this to your network's MAC address
+IPAddress ip(192, 168, 1, 177); // Change this to a suitable static IP for your network
+IPAddress server(192, 168, 1, 9); // Server IP
+const int port = 8000;
+
+// Replace with your server URL
+const char* serverUrl = "http://192.168.1.9:8000/biometricattendance/getdata/";
+
+EthernetClient client;
+
+void setup() {
+  Serial.begin(115200);
+
+  // Initialize Ethernet
+  Ethernet.begin(mac, ip);
+  delay(1000);
+
+  if (Ethernet.hardwareStatus() == EthernetNoHardware) {
+    Serial.println("Ethernet shield was not found. Sorry, can't run without hardware.");
+    while (true) {
+      delay(1); // Do nothing, no point running without Ethernet hardware
+    }
+  }
+  if (Ethernet.linkStatus() == LinkOFF) {
+    Serial.println("Ethernet cable is not connected.");
+  }
+
+  Serial.println("Connected to Ethernet");
+}
+
+void loop() {
+  ChecktoAddID();
+  ChecktoDeleteID();
+  ChecktoUpdateID();
+  delay(10000); // Check actions every 10 seconds
+}
+
+void ChecktoAddID() {
+  if (client.connect(server, port)) {
+    Serial.println("Connected to server");
+
+    String url = String(serverUrl) + "check_add_id/";
+    String postData = "Get_Fingerid=get_id";
+    
+    // Send HTTP POST request
+    client.println("POST " + url + " HTTP/1.1");
+    client.println("Host: " + String(server));
+    client.println("Content-Type: application/x-www-form-urlencoded");
+    client.print("Content-Length: ");
+    client.println(postData.length());
+    client.println();
+    client.println(postData);
+
+    // Wait for response
+    while (client.connected()) {
+      if (client.available()) {
+        String line = client.readStringUntil('\n');
+        Serial.println(line); // Print the response
+
+        // Check for response and handle the ID
+        if (line.startsWith("{\"response\": \"add-id")) {
+          String add_id = line.substring(line.indexOf("add-id") + 6);
+          Serial.println("Add ID: " + add_id);
+          int id = add_id.toInt();
+          getFingerprintEnroll(id);
+        }
+      }
+    }
+    client.stop();
+  } else {
+    Serial.println("Connection to server failed");
+  }
+}
+
+void ChecktoDeleteID() {
+  if (client.connect(server, port)) {
+    Serial.println("Connected to server");
+
+    String url = String(serverUrl) + "check_delete_id/";
+    String postData = "DeleteID=check";
+    
+    // Send HTTP POST request
+    client.println("POST " + url + " HTTP/1.1");
+    client.println("Host: " + String(server));
+    client.println("Content-Type: application/x-www-form-urlencoded");
+    client.print("Content-Length: ");
+    client.println(postData.length());
+    client.println();
+    client.println(postData);
+
+    // Wait for response
+    while (client.connected()) {
+      if (client.available()) {
+        String line = client.readStringUntil('\n');
+        Serial.println(line); // Print the response
+
+        // Check for response and handle the ID
+        if (line.startsWith("{\"response\": \"del-id")) {
+          String id = line.substring(line.indexOf("del-id") + 6);
+          Serial.println("Delete ID: " + id);
+          deleteFingerprint(id.toInt());
+        }
+      }
+    }
+    client.stop();
+  } else {
+    Serial.println("Connection to server failed");
+  }
+}
+
+void ChecktoUpdateID() {
+  if (client.connect(server, port)) {
+    Serial.println("Connected to server");
+
+    String url = String(serverUrl) + "check_update_id/";
+    String postData = "UpdateID=check";
+    
+    // Send HTTP POST request
+    client.println("POST " + url + " HTTP/1.1");
+    client.println("Host: " + String(server));
+    client.println("Content-Type: application/x-www-form-urlencoded");
+    client.print("Content-Length: ");
+    client.println(postData.length());
+    client.println();
+    client.println(postData);
+
+    // Wait for response
+    while (client.connected()) {
+      if (client.available()) {
+        String line = client.readStringUntil('\n');
+        Serial.println(line); // Print the response
+
+        // Check for response and handle the ID
+        if (line.startsWith("{\"response\": \"update-id")) {
+          String id = line.substring(line.indexOf("update-id") + 10);
+          Serial.println("Update ID: " + id);
+          updateFingerprint(id.toInt());
+        }
+      }
+    }
+    client.stop();
+  } else {
+    Serial.println("Connection to server failed");
+  }
+}
+
+void deleteFingerprint(int id) {
+  // Dummy implementation, replace with your actual code
+  Serial.printf("Fingerprint ID %d deleted.\n", id);
+}
+
+void addFingerprint(int id) {
+  // Dummy implementation, replace with your actual code
+  Serial.printf("Fingerprint ID %d added.\n", id);
+}
+
+void updateFingerprint(int id) {
+  // Dummy implementation, replace with your actual code
+  Serial.printf("Fingerprint ID %d updated.\n", id);
+}
+
+void getFingerprintEnroll(int id) {
+  // Dummy implementation, replace with your actual code
+  Serial.printf("Enrolling Fingerprint ID %d.\n", id);
+}
+*/
+
+# django code views.py
+from django.shortcuts import render
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def fingerprint_actions(request):
+    if request.method == 'POST':
+        if 'FingerID' in request.POST:
+            FingerID = request.POST['FingerID']
+            if FingerID == "1": 
+                return JsonResponse({'response': 'loginuser_name1'})
+            else:
+                return JsonResponse({'response': 'logoutuser_name' + FingerID})
+            
+        elif request.POST.get('DeleteID') == 'check':
+            return JsonResponse({'response': 'del-id123'})
+        
+        elif request.POST.get('UpdateID') == 'check':
+            return JsonResponse({'response': 'update-id-123'})
+        
+        elif request.POST.get('Get_Fingerid') == 'get_id':
+            return JsonResponse({'response': 'add-id123'})
+
+        elif 'confirm_id' in request.POST:
+            confirm_id = request.POST['confirm_id']
+            return JsonResponse({'response': 'ID ' + confirm_id + ' added'})
+        
+    return JsonResponse({'response': 'only POST allowed'})
+
+# urls.py
+# Add the following to your Django urls.py
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    # Other URL patterns
+    path('biometricattendance/getdata/check_add_id/', views.fingerprint_actions, name='check_add_id'),
+    path('biometricattendance/getdata/check_delete_id/', views.fingerprint_actions, name='check_delete_id'),
+    path('biometricattendance/getdata/check_update_id/', views.fingerprint_actions, name='check_update_id'),
+]
+
+# main urls.py
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include('attendance.urls')),
+]
