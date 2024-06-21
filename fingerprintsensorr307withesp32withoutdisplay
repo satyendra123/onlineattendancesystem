@@ -409,7 +409,7 @@ void connectToWiFi(){
 
 }
 
-/* example-2 this is the enrollment for fingerprint sensor i have used the rx tx pin. 
+/* example-2 this is the enrollment for fingerprint sensor i have used the rx tx pin. CONNECTION OF CIRCUIT diagram is red(VCC)- 3.3v, black(gnd)- gnd, yellow(rx)-p16(tx) , green(tx)-p17(rx)
 #include <HardwareSerial.h>
 #include <Adafruit_Fingerprint.h>
 
