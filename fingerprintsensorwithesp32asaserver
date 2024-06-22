@@ -1,4 +1,5 @@
-#
+#https://www.donskytech.com/arduino-fingerprint-door-lock-using-esp32-with-a-web-app/#:~:text=ESP32%20and%20Web%20Server%20%E2%80%93%20this,components%20of%20our%20security%20system. yaha se ye code liya gaya hai. isme humne spiffs me apna html aur css ka code likha hai
+
 
 #include <Arduino.h>
 #include <Adafruit_Fingerprint.h>
