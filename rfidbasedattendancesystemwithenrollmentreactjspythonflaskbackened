@@ -1,0 +1,127 @@
+#Step-1 so ye basically kaise kaam karega hum us chiz ko samjhte hai. sabse pahle rfid card ko scan karenge aur esp32 ek endpoint se data send karega card ka. agar to data registered table me hai to iska hum check in and checkout karenge aur relay ko trigger krenge
+#aur agar jo card ka data hai wo registered table me nahi hai to hum ise store krenge ek pending_registration table me. aur jaise hi admin enroll button par click karega aur user ko bolega scan karne ko to agar data pending_registration me hai to wo data de dega aur agar nahi hai to
+#pending_registration me store karega aur latest wala data send kar dega react js ko. aur baki sara form bhar dega aur ye data ko send kar dega backened python me aur jo form data ko lekar student table me store kara dega
+# aur pending wale se hata dega. so is tarah se humara pura complete setup ho jayega
+from flask import Flask, request, jsonify
+import sqlite3
+from datetime import datetime
+
+app = Flask(__name__)
+
+DATABASE = 'attendance.db'
+
+# Helper function to connect to the database
+def get_db_connection():
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+# Endpoint to scan a card and store it in the pending list
+@app.route('/scan', methods=['POST'])
+def scan_card():
+    data = request.json
+    card_id = data.get('card_id')
+    
+    if not card_id:
+        return jsonify({'error': 'Card ID is required'}), 400
+    
+    conn = get_db_connection()
+    pending = conn.execute('SELECT * FROM pending_user WHERE card_id = ?', (card_id,)).fetchone()
+    
+    if pending:
+        conn.close()
+        return jsonify({'status': 'pending', 'message': 'Card ID already in pending list', 'card_id': card_id}), 200
+    else:
+        conn.execute('INSERT INTO pending_user (card_id) VALUES (?)', (card_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'status': 'new', 'message': 'New Card ID stored temporarily', 'card_id': card_id}), 201
+
+# Endpoint to get the latest pending card ID
+@app.route('/pending_card', methods=['GET'])
+def get_pending_card():
+    conn = get_db_connection()
+    pending_card = conn.execute('SELECT * FROM pending_user ORDER BY id LIMIT 1').fetchone()
+    conn.close()
+    
+    if pending_card:
+        return jsonify({'card_id': pending_card['card_id']}), 200
+    else:
+        return jsonify({'error': 'No pending card found'}), 404
+
+# Admin registration endpoint
+@app.route('/register', methods=['POST'])
+def register_student():
+    data = request.json
+    card_id = data.get('card_id')
+    name = data.get('name')
+    roll_number = data.get('roll_number')
+    student_class = data.get('class')
+    
+    if not card_id or not name or not roll_number or not student_class:
+        return jsonify({'error': 'All fields are required'}), 400
+    
+    conn = get_db_connection()
+    
+    # Check if the card is already pending
+    pending = conn.execute('SELECT * FROM pending_user WHERE card_id = ?', (card_id,)).fetchone()
+    if not pending:
+        return jsonify({'error': 'Card ID not found in pending list'}), 404
+    
+    # Register the student
+    conn.execute('INSERT INTO registered_user (card_id, name, roll_number, class) VALUES (?, ?, ?, ?)', 
+                 (card_id, name, roll_number, student_class))
+    conn.commit()
+    
+    # Remove the card from pending list
+    conn.execute('DELETE FROM pending_user WHERE card_id = ?', (card_id,))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'status': 'registered', 'message': f'Student {name} registered successfully', 'card_id': card_id}), 201
+
+# Endpoint to check-in/check-out
+@app.route('/attendance', methods=['POST'])
+def record_attendance():
+    data = request.json
+    card_id = data.get('card_id')
+    action = data.get('action')  # 'check-in' or 'check-out'
+    
+    if not card_id or not action:
+        return jsonify({'error': 'Card ID and action are required'}), 400
+
+    if action not in ['check-in', 'check-out']:
+        return jsonify({'error': 'Invalid action'}), 400
+    
+    conn = get_db_connection()
+    registered_user = conn.execute('SELECT * FROM registered_user WHERE card_id = ?', (card_id,)).fetchone()
+    
+    if not registered_user:
+        conn.close()
+        return jsonify({'error': 'Card ID not found in registered list'}), 404
+    
+    # Record the attendance
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    conn.execute('INSERT INTO student_attendance (card_id, action, timestamp) VALUES (?, ?, ?)', 
+                 (card_id, action, timestamp))
+    conn.commit()
+    conn.close()
+    
+    # Control the relay (pseudo-code for relay control)
+    # relay_control(action)  # Implement this function to interact with the relay
+
+    return jsonify({'status': 'success', 'message': f'Attendance recorded for {card_id}', 'action': action}), 200
+
+# Endpoint to control the relay (pseudo-code)
+@app.route('/relay/<action>', methods=['POST'])
+def control_relay(action):
+    if action not in ['open', 'close']:
+        return jsonify({'error': 'Invalid action'}), 400
+    
+    # Implement relay control logic here
+    # relay_control(action)  # Replace with actual relay control code
+
+    return jsonify({'status': 'success', 'message': f'Relay {action}ed successfully'}), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)
